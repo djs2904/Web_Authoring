@@ -1,0 +1,124 @@
+/* Extremely Garish and Unreadable CSS for TWP Ugly Exercise */
+
+body {
+    background: magenta;
+    font-family: 'Papyrus', fantasy, cursive;
+    font-size: 35px;
+    color: lime;
+    margin: 100px;
+    padding: 50px;
+    border: 25px double yellow;
+    text-align: center;
+    word-spacing: 15px;
+}
+
+h1 {
+    background: cyan;
+    color: darkred;
+    font-size: 70px;
+    text-transform: uppercase;
+    border: 10px dotted green;
+    letter-spacing: 10px;
+    text-shadow: 6px 6px 0px black;
+    padding: 20px;
+    transform: rotate(-5deg);
+}
+
+h2 {
+    background: black;
+    color: hotpink;
+    font-size: 60px;
+    text-decoration: overline wavy orange;
+    padding: 15px;
+    transform: rotate(5deg);
+}
+
+p {
+    background: yellow;
+    color: white;
+    font-size: 30px;
+    line-height: 3.5;
+    border: 8px solid red;
+    padding: 40px;
+    font-weight: bolder;
+    text-transform: capitalize;
+    text-align: justify;
+}
+
+ul, ol {
+    background: white;
+    border: 8px dashed darkblue;
+    padding: 40px;
+    font-size: 32px;
+    list-style-type: none;
+}
+
+li {
+    color: orange;
+    font-size: 30px;
+    font-style: oblique;
+    text-shadow: 5px 5px 10px black;
+}
+
+a {
+    color: white;
+    background: red;
+    font-weight: bold;
+    text-decoration: none;
+    border: 8px solid black;
+    padding: 15px;
+    font-size: 35px;
+    text-transform: uppercase;
+}
+
+a:hover {
+    background: darkblue;
+    color: yellow;
+    font-size: 40px;
+    letter-spacing: 5px;
+}
+
+table {
+    width: 100%;
+    background: pink;
+    border-collapse: separate;
+    border-spacing: 15px;
+}
+
+th {
+    background: orange;
+    color: black;
+    font-size: 45px;
+    border: 15px solid lime;
+    text-transform: lowercase;
+}
+
+td {
+    background: darkgray;
+    color: black;
+    font-size: 30px;
+    border: 10px solid darkgreen;
+    text-align: center;
+}
+
+img {
+    border: 15px solid red;
+    transform: rotate(20deg) scale(1.5);
+}
+
+strong {
+    color: darkblue;
+    background: yellow;
+    font-size: 40px;
+    text-transform: uppercase;
+    text-decoration: underline wavy red;
+}
+
+em {
+    color: white;
+    font-size: 35px;
+    font-weight: lighter;
+    background: darkred;
+    padding: 20px;
+    border: 5px solid cyan;
+}
