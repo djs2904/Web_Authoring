@@ -2,7 +2,7 @@
 
 Index Page
 
-Links to Main and Ugly\n
-Links to other pages as they get added\n
-LEAD Images\n
-CSS (minimal)\n
+Links to Main and Ugly <br/>
+Links to other pages as they get added <br/>
+LEAD Images <br/>
+CSS (minimal) <br/>
