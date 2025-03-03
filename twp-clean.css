@@ -11,6 +11,24 @@ html {
     scroll-behavior: smooth;
 }
 
+.header{
+    text-align: right;
+    padding-right: 100px;
+
+}
+
+#site-logo {
+    display: flex;
+    margin: 0 auto;
+    width: 400px;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 20px;
+}
+.header a {
+    padding: 0 10px; /* Adds 10px of padding on the left and right of each link */
+  }
 /* General Styles */
 body {
     overflow-x: hidden; /* Prevents horizontal overflow */
@@ -75,12 +93,13 @@ a {
     font-weight: bold;
     border-radius: 5px;
     margin: 0 8px;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease-in-out;
 }
 
 #nav-bar a:hover {
     background: white;
     color: #003366;
+    transform: scale(1.15);
 }
 
 /* Style for headers */
@@ -143,24 +162,29 @@ ol li {
 .gallery-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-gap: 10px; /* Adjust gap as needed */
-    width: fit-content; /* Key: Makes the grid only as wide as its content */
-    margin: 0 auto; /* Optional: Centers the grid on the page */
-    border-collapse: separate; /* Required for borders to show between gaps*/
-  }
-  
-  .gallery-grid img {
+    grid-gap: 10px;
+    width: fit-content;
+    margin: 0 auto;
+    border-collapse: separate;
+}
+
+.gallery-grid img {
     width: 100%;
     height: auto;
     object-fit: cover;
     aspect-ratio: 1/1;
-    border: 2px solid black; /* Add a border to each image */
-  }
-  
-  /* Optional: Styles for the gallery heading */
-  #gallery {
-    text-align: center;
-    margin-bottom: 20px;
+    border: 2px solid black;
+    transition: transform 0.2s ease-in-out; /* Add a transition for hover effect */
+}
+
+.gallery-grid img:hover {
+    transform: scale(1.05); /* Scale up slightly on hover */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Add a subtle shadow on hover */
+}
+
+/* Optional: Add some padding around the gallery */
+#gallery {
+    padding: 20px;
 }
 
 .table-container {
