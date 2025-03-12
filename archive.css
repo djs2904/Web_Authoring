@@ -1,4 +1,6 @@
-
+body{
+    font-size:1.3rem;
+}
 /* Logo Styling */
 #site-logo img {
     height: 100px;
