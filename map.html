@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Time Refined - Watchmaking Interactive Map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="main.css">
+  <style>
+    /* Your provided CSS - unchanged */
+    body {
+      font-family: 'Inter', sans-serif; /* Applied font */
+    }
+    .map-container {
+      position: relative;
+      margin: 0 auto;
+      max-width: 900px;
+    }
+
+    .map-pin {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: #c94c4c; /* Default pin color */
+      border: 3px solid #ffffff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 10;
+    }
+
+    .map-pin:hover, .map-pin.active {
+      background-color: #2c7a7b; /* Active/hover color */
+      transform: translate(-50%, -50%) scale(1.2);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    }
+
+    /* Specific pin colors - you might want distinct colors */
+    .map-pin[data-region="switzerland"] { background-color: #ef4444; } /* Red */
+    .map-pin[data-region="germany"] { background-color: #facc15; } /* Yellow */
+    .map-pin[data-region="japan"] { background-color: #dc2626; } /* Another Red */
+    .map-pin[data-region="uk"] { background-color: #1e3a8a; }    /* Dark Blue */
+    .map-pin[data-region="usa"] { background-color: #2563eb; }    /* Blue */
+
+    .map-pin::after {
+      content: attr(data-title);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 5px 10px;
+      background-color: #374151; /* Darker tooltip */
+      color: white;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      margin-bottom: 5px; /* Space between pin and tooltip */
+    }
+
+    .map-pin:hover::after {
+      opacity: 1;
+    }
+
+    .history-section {
+      opacity: 0;
+      max-height: 0; /* Changed from height: 0 for smoother transition */
+      overflow: hidden;
+      /* Added max-height transition */
+      transition: opacity 0.5s ease, max-height 0.7s ease-out;
+    }
+
+    .history-section.active {
+      opacity: 1;
+      max-height: 3000px; /* Set large max-height instead of height: auto */
+      overflow: visible;
+    }
+
+    .map-image {
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: block; /* Prevents extra space below image */
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-left: 28px;
+      margin-bottom: 1.5rem; /* 24px */
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 6px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #14b8a6; /* Teal color for timeline dots */
+    }
+
+    .timeline-item::after {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 22px;
+      width: 2px;
+      height: calc(100% + 4px); /* Adjusted height */
+      background-color: #d1d5db; /* light gray */
+    }
+
+    .timeline-item:last-child::after {
+      display: none;
+    }
+
+    .timeline-year {
+      font-weight: 700; /* bold */
+      color: #1f2937; /* dark gray */
+      font-size: 1.1rem; /* 18px */
+      margin-bottom: 0.25rem; /* 4px */
+    }
+
+    .timeline-content {
+      color: #4b5563; /* medium gray */
+    }
+
+    .scroll-to-map {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      background-color: #14b8a6; /* Teal color */
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 100;
+    }
+
+    .scroll-to-map.visible {
+      opacity: 1;
+    }
+
+     /* Header Styles (Ensure consistency if main.css is missing) */
+     .site-header { background-color: #ffffff; padding: 1rem 0; }
+     .logo-link img { height: 40px; } /* Adjust as needed */
+     .main-nav a { padding: 0.5rem 0; }
+     .main-nav a.active { border-bottom: 2px solid #2563eb; color: #2563eb; } /* Example active state */
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .map-container {
+        overflow-x: auto; /* Allow horizontal scrolling for map on small screens */
+      }
+      .map-image {
+         min-width: 700px; /* Prevent map becoming too small */
+      }
+      .map-pin { /* Slightly smaller pins on mobile */
+        width: 20px;
+        height: 20px;
+        border-width: 2px;
+      }
+       /* Adjust grid columns for smaller screens */
+      .grid-cols-2 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+      .md\:grid-cols-3 { grid-template-columns: repeat(1, minmax(0, 1fr)); } /* Stack grid columns */
+      .md\:grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } /* 2 columns for brands on mobile */
+    }
+     @media (min-width: 768px) { /* Styles for medium screens and up */
+        .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <header class="site-header shadow-md">
+    <div class="container mx-auto flex justify-between items-center px-4 py-3">
+      <a href="home.html"><img src="imgs/time_refined.svg" alt="Time Refined Logo" class="h-8"></a>
+      <nav>
+        <ul class="flex space-x-6">
+          <li><a href="home.html" class="font-medium text-gray-700 hover:text-blue-600">Home</a></li>
+          <li><a href="reviews.html" class="font-medium text-gray-700 hover:text-blue-600">Reviews</a></li>
+          <li><a href="gallery.html" class="font-medium text-gray-700 hover:text-blue-600">Gallery</a></li>
+          <li><a href="about.html" class="font-medium text-gray-700 hover:text-blue-600">About</a></li>
+          <li><a href="extra.html" class="font-medium text-gray-700 hover:text-blue-600">Maintenance</a></li>
+          <li><a href="map.html" class="font-medium text-blue-600">Map</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container mx-auto mt-8 px-4">
+
+    <!-- Intro + Map -->
+    <section class="bg-white p-6 rounded-lg shadow mb-10">
+      <h1 class="text-3xl font-bold mb-4">Global Watchmaking History Map</h1>
+      <p class="text-gray-700 mb-6">Explore the rich history of watchmaking across the globe. Click a pin to learn more.</p>
+      <div class="map-container mb-4" id="map">
+        <img src="imgs/map.jpg" alt="World Map" class="map-image">
+        <div class="map-pin" style="top:38%; left:48%" data-region="switzerland" data-title="Switzerland"></div>
+        <div class="map-pin" style="top:34%; left:49%" data-region="germany"     data-title="Germany"></div>
+        <div class="map-pin" style="top:40%; left:82%" data-region="japan"       data-title="Japan"></div>
+        <div class="map-pin" style="top:32%; left:45%" data-region="uk"          data-title="United Kingdom"></div>
+        <div class="map-pin" style="top:38%; left:20%" data-region="usa"         data-title="United States"></div>
+      </div>
+      <p class="text-sm text-gray-500 italic text-center">Click a pin to view that region’s history below</p>
+    </section>
+
+    <!-- Switzerland -->
+    <section id="switzerland" class="history-section hidden bg-white p-6 rounded-lg shadow mb-10">
+      <h2 class="text-2xl font-bold mb-4 flex items-center">
+        <span class="w-8 h-8 bg-red-600 rounded-full mr-3"></span>Swiss Watchmaking Legacy
+      </h2>
+      <div class="grid md:grid-cols-3 gap-6 mb-6">
+        <div class="col-span-2">
+          <p class="mb-4">Switzerland has been at the heart of watchmaking for centuries, establishing a legacy built on precision, innovation, and a deep-rooted tradition of artisanal skill. This enduring prominence is a testament to the industry's ability to balance its rich heritage with continuous technological advancement. From intricate complications, showcasing mastery over complex mechanical movements, to impeccable finishing, demonstrating an unwavering attention to detail in every component, Swiss watches are widely regarded as the pinnacle of craftsmanship. This reputation is upheld by a concentration of highly skilled watchmakers, specialized suppliers, and a culture that values both technical excellence and artistic expression in timekeeping.</p>
+        </div>
+        <div>
+          <img src="imgs/vallee.jpg" alt="Vallée de Joux" class="rounded-lg shadow w-full">
+          <p class="text-sm text-gray-500 text-center">The Vallée de Joux, cradle of Swiss watchmaking</p>
+        </div>
+      </div>
+      <h3 class="text-xl font-semibold mb-3">Historical Timeline</h3>
+      <div class="timeline mb-6">
+        <div class="timeline-item">
+          <div class="timeline-year">1541</div>
+          <div class="timeline-content">John Calvin's Geneva reformation […] goldsmiths toward watchmaking.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-year">1770s</div>
+          <div class="timeline-content">The Vallée de Joux emerges as a watchmaking center.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-year">1839</div>
+          <div class="timeline-content">Founding of Patek, Czapek & Cie (later Patek Philippe).</div>
+        </div>
+        <!-- add more as needed -->
+      </div>
+      <h3 class="text-xl font-semibold mb-3">Notable Brands</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="p-4 bg-gray-100 rounded text-center">
+          <h4 class="font-medium">Rolex</h4><p class="text-sm text-gray-600">Est. 1905</p>
+        </div>
+        <div class="p-4 bg-gray-100 rounded text-center">
+          <h4 class="font-medium">Patek Philippe</h4><p class="text-sm text-gray-600">Est. 1839</p>
+        </div>
+        <div class="p-4 bg-gray-100 rounded text-center">
+          <h4 class="font-medium">Omega</h4><p class="text-sm text-gray-600">Est. 1848</p>
+        </div>
+        <div class="p-4 bg-gray-100 rounded text-center">
+          <h4 class="font-medium">TAG Heuer</h4><p class="text-sm text-gray-600">Est. 1860</p>
+        </div>
+      </div>
+      <div class="text-center">
+        <a href="#map" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Back to Map</a>
+      </div>
+    </section>
+
+    <!-- Germany -->
+    <section id="germany" class="history-section hidden bg-white p-6 rounded-lg shadow mb-10">
+      <h2 class="text-2xl font-bold mb-4 flex items-center">
+        <span class="w-8 h-8 bg-yellow-400 rounded-full mr-3"></span>German Precision Engineering
+      </h2>
+      <div class="grid md:grid-cols-3 gap-6 mb-6">
+        <div class="col-span-2">
+          <p class="mb-4">German watchmaking is characterized by functional aesthetics, a design philosophy where form is dictated by purpose. The Bauhaus movement profoundly influenced this approach, advocating for clean, technical designs that prioritize legibility and efficiency. Beyond these influences, German watchmaking is also defined by a commitment to precision engineering, meticulous attention to detail, and robust construction. Many German brands emphasize in-house movements known for their quality and accuracy, and there is a strong tradition of durability and reliability. This often translates into understated, minimalist aesthetics that eschew unnecessary ornamentation in favor of clarity and practicality. Specific regional traditions, particularly from Glashütte, further contribute to this identity with features like the use of German silver, three-quarter plates, and distinctive finishing techniques.</p>
+        </div>
+        <div>
+          <img src="imgs/glashutte.avif" alt="Glashütte" class="rounded-lg shadow w-full">
+          <p class="text-sm text-gray-500 text-center">Glashütte, heart of German watchmaking</p>
+        </div>
+      </div>
+      <h3 class="text-xl font-semibold mb-3">Timeline</h3>
+      <div class="timeline mb-6">
+        <div class="timeline-item"><div class="timeline-year">1845</div><div class="timeline-content">F. A. Lange founds Glashütte company.</div></div>
+        <div class="timeline-item"><div class="timeline-year">1920s</div><div class="timeline-content">Bauhaus influences minimalist dials.</div></div>
+        <!-- more… -->
+      </div>
+      <h3 class="text-xl font-semibold mb-3">Notable Brands</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="p-4 bg-gray-100 rounded text-center"><h4 class="font-medium">A. Lange & Söhne</h4><p class="text-sm text-gray-600">Est. 1845</p></div>
+        <div class="p-4 bg-gray-100 rounded text-center"><h4 class="font-medium">Nomos</h4><p class="text-sm text-gray-600">Est. 1990</p></div>
+        <!-- … -->
+      </div>
+      <div class="text-center">
+        <a href="#map" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Back to Map</a>
+      </div>
+    </section>
+
+    <!-- Japan -->
+    <section id="japan" class="history-section hidden bg-white p-6 rounded-lg shadow mb-10">
+      <h2 class="text-2xl font-bold mb-4 flex items-center">
+        <span class="w-8 h-8 bg-red-500 rounded-full mr-3"></span>Japanese Innovation
+      </h2>
+      <div class="grid md:grid-cols-3 gap-6 mb-6">
+        <div class="col-span-2">
+          <p class="mb-4">Japan revolutionized quartz technology,ushering in a new era of accuracy and affordability that significantly impacted the global watch industry and enabled mass production on an unprecedented scale. This innovation, spearheaded by companies like Seiko with the introduction of the Astron in 1969, disrupted the dominance of mechanical watchmaking and made precise timekeeping accessible to a much wider audience. While this technological leap facilitated the production of reliable, inexpensive watches, Japanese watchmaking also maintains a strong connection to traditional craftsmanship. Grand Seiko, in particular, blends tradition with precision, exemplifying a commitment to high-quality mechanical movements, exquisite finishing techniques, and a distinct aesthetic that stands alongside the finest in the world, showcasing the dual capacity of Japanese horology for both innovative technology and refined artistry.</p>
+        </div>
+        <div>
+          <img src="imgs/seiko_studio.jpg" alt="Seiko Studio" class="rounded-lg shadow w-full">
+          <p class="text-sm text-gray-500 text-center">Seiko’s Shizukuishi Studio</p>
+        </div>
+      </div>
+      <h3 class="text-xl font-semibold mb-3">Timeline</h3>
+      <div class="timeline mb-6">
+        <div class="timeline-item"><div class="timeline-year">1881</div><div class="timeline-content">Kintaro Hattori founds Seikosha.</div></div>
+        <div class="timeline-item"><div class="timeline-year">1969</div><div class="timeline-content">Seiko Astron, first quartz watch.</div></div>
+      </div>
+      <h3 class="text-xl font-semibold mb-3">Brands</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="p-4 bg-gray-100 rounded text-center"><h4 class="font-medium">Seiko</h4><p class="text-sm text-gray-600">Est. 1881</p></div>
+        <div class="p-4 bg-gray-100 rounded text-center"><h4 class="font-medium">Grand Seiko</h4><p class="text-sm text-gray-600">Est. 1960</p></div>
+      </div>
+      <div class="text-center">
+        <a href="#map" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Back to Map</a>
+      </div>
+    </section>
+
+    <!-- UK -->
+    <section id="uk" class="history-section hidden bg-white p-6 rounded-lg shadow mb-10">
+      <h2 class="text-2xl font-bold mb-4 flex items-center">
+        <span class="w-8 h-8 bg-blue-900 rounded-full mr-3"></span>British Horological Heritage
+      </h2>
+      <div class="grid md:grid-cols-3 gap-6 mb-6">
+        <div class="col-span-2">
+          <p class="mb-4">From Harrison’s marine chronometers, which revolutionized seafaring by providing the first accurate means of determining longitude at sea in the 18th century, to recent revivals in precise timekeeping technology, the evolution of timekeeping has been fundamental to maritime navigation. Harrison's groundbreaking work with his H series of timekeepers, particularly the H4, demonstrated that a reliable onboard mechanical clock could maintain the accuracy needed for celestial navigation to pinpoint a ship's east-west position, a problem that had plagued mariners for centuries. This invention significantly improved safety and enabled more efficient global trade and exploration.</p>
+
+            <p>Over time, mechanical chronometers became standard equipment on ships, with continued refinements improving their accuracy and reliability. The 20th century saw the advent of electronic navigation systems. Radio time signals provided a new level of accuracy, and the development of Loran and subsequently GPS (Global Positioning System) fundamentally changed maritime navigation by using satellite signals to provide highly precise position and time information.</p>
+            
+            <p>In recent years, while GPS remains a primary tool, there's a renewed focus on bolstering navigational resilience and accuracy, partly due to the vulnerabilities of satellite signals to jamming and spoofing. This has led to research and development in alternative and complementary timekeeping technologies. Efforts include advancing inertial navigation systems, exploring celestial navigation with modern tools, and significantly, developing highly portable and robust atomic clocks. These modern atomic clocks, much smaller and more resilient than their predecessors, offer a potential for extremely precise autonomous timekeeping onboard vessels, reducing reliance on external signals and representing a significant "revival" in the pursuit of ultimate timekeeping accuracy for the demanding environment of maritime navigation.</p>
+        </div>
+        <div>
+          <img src="imgs/greenwich.jpg" alt="Greenwich" class="rounded-lg shadow w-full">
+          <p class="text-sm text-gray-500 text-center">Greenwich Observatory</p>
+        </div>
+      </div>
+      <h3 class="text-xl font-semibold mb-3">Timeline</h3>
+      <div class="timeline mb-6">
+        <div class="timeline-item"><div class="timeline-year">1631</div><div class="timeline-content">Clockmakers’ Company founded.</div></div>
+        <div class="timeline-item"><div class="timeline-year">1761</div><div class="timeline-content">Harrison’s H4 marine chronometer.</div></div>
+      </div>
+      <h3 class="text-xl font-semibold mb-3">Figures & Brands</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="p-4 bg-gray-100 rounded text-center"><h4 class="font-medium">John Harrison</h4><p class="text-sm text-gray-600">1693–1776</p></div>
+        <div class="p-4 bg-gray-100 rounded text-center"><h4 class="font-medium">Bremont</h4><p class="text-sm text-gray-600">Est. 2002</p></div>
+      </div>
+      <div class="text-center">
+        <a href="#map" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Back to Map</a>
+      </div>
+    </section>
+
+    <!-- USA -->
+    <section id="usa" class="history-section hidden bg-white p-6 rounded-lg shadow mb-10">
+      <h2 class="text-2xl font-bold mb-4 flex items-center">
+        <span class="w-8 h-8 bg-blue-600 rounded-full mr-3"></span>American Watchmaking
+      </h2>
+      <div class="grid md:grid-cols-3 gap-6 mb-6">
+        <div class="col-span-2">
+          <p class="mb-4">Pioneers of mass production, such as the Waltham Watch Company and Elgin in the United States during the 19th century, transformed watchmaking from a hand craft into an industrialized process. By developing standardized, interchangeable parts and implementing factory-based assembly lines, they made timepieces significantly more accessible and affordable to a broader population. This marked a pivotal shift from traditional artisanal methods, increasing output and consistency on an unprecedented scale.</p>
+
+            <p>This era of mass production dominated the watch industry for many decades, primarily in the US and later significantly influencing Swiss watchmaking. However, the advent of quartz technology in the late 20th century, often referred to as the "quartz crisis," disrupted the traditional mechanical watch industry. Quartz movements offered greater accuracy and were even more conducive to mass production, leading to a significant decline in the demand for mechanical watches and impacting many established manufacturers.</p>
+            
+            <p>In recent years, alongside the resurgence of interest in mechanical watches, there has been a notable rise of today’s microbrand revivals. These smaller, independent watch companies often leverage online platforms for sales and community building, focusing on niche designs, limited production runs, and a more direct relationship with their customers. While they may utilize a mix of in-house, outsourced, or third-party movements, microbrands often emphasize unique aesthetics, storytelling, and a passion for horology that resonates with collectors seeking alternatives to the offerings of large, established brands. They represent a dynamic and increasingly influential segment of the modern watch landscape, bringing diverse perspectives and products to the market.</p>
+
+            
+        </div>
+        <div>
+          <img src="imgs/waltham.jpg" alt="Waltham Factory" class="rounded-lg shadow w-full">
+          <p class="text-sm text-gray-500 text-center">Waltham Watch Factory</p>
+        </div>
+      </div>
+      <h3 class="text-xl font-semibold mb-3">Timeline</h3>
+      <div class="timeline mb-6">
+        <div class="timeline-item"><div class="timeline-year">1850</div><div class="timeline-content">Waltham Watch Company founded.</div></div>
+        <div class="timeline-item"><div class="timeline-year">1970s</div><div class="timeline-content">Quartz crisis hits US industry.</div></div>
+      </div>
+      <h3 class="text-xl font-semibold mb-3">Brands</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="p-4 bg-gray-100 rounded text-center"><h4 class="font-medium">Waltham</h4><p class="text-sm text-gray-600">Est. 1850</p></div>
+        <div class="p-4 bg-gray-100 rounded text-center"><h4 class="font-medium">Shinola</h4><p class="text-sm text-gray-600">Est. 2011</p></div>
+      </div>
+      <div class="text-center">
+        <a href="#map" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Back to Map</a>
+      </div>
+    </section>
+
+    <!-- Scroll to Map -->
+    <div class="scroll-to-map hidden">
+      <span>&#8593;</span>
+    </div>
+
+  </main>
+
+  <footer class="bg-gray-800 text-white p-6">
+    <div class="text-center">© 2025 Time Refined. All rights reserved.</div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const pins     = document.querySelectorAll('.map-pin');
+      const sections = document.querySelectorAll('.history-section');
+      const scrollBtn = document.querySelector('.scroll-to-map');
+
+      pins.forEach(pin => {
+        pin.addEventListener('click', () => {
+          // clear previous
+          pins.forEach(p => p.classList.remove('active'));
+          sections.forEach(sec => {
+            sec.classList.add('hidden');
+            sec.classList.remove('active');
+          });
+          // activate clicked
+          pin.classList.add('active');
+          const region = pin.dataset.region;
+          const target = document.getElementById(region);
+          target.classList.remove('hidden');
+          target.classList.add('active');
+          target.scrollIntoView({ behavior: 'smooth' });
+        });
+      });
+
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 200) {
+          scrollBtn.classList.add('visible');
+          scrollBtn.classList.remove('hidden');
+        } else {
+          scrollBtn.classList.remove('visible');
+          scrollBtn.classList.add('hidden');
+        }
+      });
+
+      scrollBtn.addEventListener('click', () => {
+        document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+  </script>
+</body>
+</html>
